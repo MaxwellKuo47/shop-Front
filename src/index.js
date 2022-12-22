@@ -6,7 +6,9 @@ import ErrorPage from './pages/ErrorPage'
 import { BrowserRouter, createBrowserRouter, RouterProvider } from 'react-router-dom';
 import BgVideo from "./static/bg-video.mp4"
 import MainPageVideo from "./components/MainPageVideo";
-import AdminConsole from "./components/AdminConsole";
+import AdminConsole from "./components/Console/AdminConsole";
+import ConsoleMainBlock from './components/Console/ConsoleMain';
+import ConsoleProductAdd from './components/Console/ConsoleProductAdd';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 const router = createBrowserRouter([
@@ -23,6 +25,16 @@ const router = createBrowserRouter([
       {
         path:"/console",
         element : <AdminConsole />,
+        children:[
+          {
+            path:"/console",
+            element:<ConsoleMainBlock />,
+          },
+          {
+            path:"/console/product/add",
+            element:<ConsoleProductAdd />
+          }
+        ]
       }
     ]
   },

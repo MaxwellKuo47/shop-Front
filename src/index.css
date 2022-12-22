@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 .nav-selection-list {
- @apply bg-white whitespace-nowrap flex flex-col text-center absolute transition duration-200 opacity-0 group-hover:opacity-100 top-10 border
+ @apply  bg-white whitespace-nowrap flex-col text-center absolute transition duration-300 opacity-0 group-hover:opacity-100 top-10 border
 }
 
 .nav-selection-list-item {
-  @apply bg-white px-6 py-3 hover:bg-gray-100 transition duration-200
+  @apply hidden group-hover:block bg-white px-6 py-3 hover:bg-gray-100
 }

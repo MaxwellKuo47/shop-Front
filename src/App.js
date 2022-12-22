@@ -9,7 +9,7 @@ function App() {
     <div>
       {/* Header */}
       <Header />
-      <main>
+      <main className="h-screen">
         <Outlet />
       </main>
     </div>
