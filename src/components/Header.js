@@ -22,7 +22,7 @@ function Header() {
           </Link>
           <div>
             <div className='flex space-x-4 items-center justify-end'>
-              <Link className='select-none text-sm text-[#2a2a2a] font-mono' to={`\console`} >CONSOLE</Link>
+              <Link className='select-none text-sm text-[#2a2a2a] font-mono' to={`/console`} >CONSOLE</Link>
               <a className='select-none text-sm text-[#2a2a2a] font-mono' href="https://www.facebook.com/JetLstudio/" target="_blank">FACEBOOK</a>
               <a className='select-none text-sm text-[#2a2a2a] font-mono' href="https://www.instagram.com/jetl__2021/" target="_blank">INSTAGRAM</a>
               <a className='select-none text-xs text-[#2a2a2a] font-sans' href="https://shopee.tw/jetl__2021" target="_blank">蝦皮賣場</a>

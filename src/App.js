@@ -6,10 +6,10 @@ import MainPageVideo from "./components/MainPageVideo";
 
 function App() {
   return (
-    <div>
+    <div className="h-screen overflow-y-auto">
       {/* Header */}
       <Header />
-      <main className="h-screen">
+      <main className="">
         <Outlet />
       </main>
     </div>
