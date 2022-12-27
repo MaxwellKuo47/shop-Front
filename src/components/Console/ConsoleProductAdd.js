@@ -17,7 +17,7 @@ function ConsoleProductAdd() {
     productDes: useRef(null),
   };
 
-  const handleImageInput = () => {
+  const handleImageInput = async () => {
     const newArr = curPhotos.slice(0)
     const curOffset = newArr.length
     if (!(curOffset < 12)) { //Max Photo for a product is 12
@@ -26,21 +26,29 @@ function ConsoleProductAdd() {
     }
     let counter = 0;
     for (const file of refPhoto.current.files) {
+      if((counter + curOffset) === 12) return;
+      counter++;
       const frd = new FileReader();
-      frd.onload = e => {
-        if((counter + curOffset) === 12) return;
-        counter++;
-        newArr.push({
-          ID: uuid(),
-          imageSrc: e.target.result,
-          fileObj: file,
-        })
-        if(counter === refPhoto.current.files.length || 
-          (counter + curOffset) === 12) {
-          setCurPhotos(newArr);
-        }
-      }
       frd.readAsDataURL(file)
+      const frdDoneEvent = await new Promise((resolve) => frd.onload = resolve)
+      const image = new Image();
+      image.src = frdDoneEvent.target.result;
+      await new Promise((resolve) => image.onload = resolve);
+      const blobLgImg = await compressImage(image, 0.9, 1200)
+      const blobSmImg = await compressImage(image, 0.9, 400)
+      const smImgSrc = URL.createObjectURL(blobSmImg)
+      console.log(blobLgImg, blobSmImg)
+      newArr.push({
+        ID: uuid(),
+        smImgSrc,
+        blobLgImg,
+        blobSmImg,
+      })
+      if(counter === refPhoto.current.files.length || 
+        (counter + curOffset) === 12) {
+        setCurPhotos(newArr);
+        return;
+      }
     }
   }
   const handleDeleteImage = (position) => {
@@ -88,10 +96,33 @@ function ConsoleProductAdd() {
     newArr[position][propName] = e.target.value;
     SetColorSizeElement(newArr);
   }
+
+  const compressImage = (image, quality, size) => {
+      //Compress image to big one for product detail page, small one for display page.
+      return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        let ratio;
+        if (image.width > image.height) {
+          ratio = image.width / size;
+        } else {
+          ratio = image.height / size;
+        }
+        canvas.width = image.width / ratio;
+        canvas.height = image.height / ratio;
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(resolve,
+        "image/jpeg",
+        quality
+        )
+      })
+  }
+
   const handleSubmit = () => {
     console.log("商品名稱", dataSubmit.productName.current.value)
     console.log("商品敘述", dataSubmit.productDes.current.value)
-    console.log("表單圖片", curPhotos.map((obj) => obj.fileObj))
+    console.log("表單圖片", curPhotos.map((obj) => obj))
     console.log("表單標籤", Tag)
     console.log("表單輸出數量", ColorSizeElements)
   }
@@ -103,7 +134,7 @@ function ConsoleProductAdd() {
         <p>商品圖片</p>
         <div className='grid grid-cols-5 gap-3 place-items-center'>
           {/* Preview */}
-          {curPhotos.length > 0 && curPhotos.map((obj, index) => (<ConsoleProductAddImagePreview key={obj.ID} src={obj.imageSrc} position={index} handleDelete={handleDeleteImage} />))}
+          {curPhotos.length > 0 && curPhotos.map((obj, index) => (<ConsoleProductAddImagePreview key={obj.ID} src={obj.smImgSrc} position={index} handleDelete={handleDeleteImage} />))}
           
           {/* ImageAdding Button */}
           <div className='group hover:bg-slate-200 hover:border-blue-500 h-20 w-20 border-2 border-dashed cursor-pointer grid place-items-center border-slate-400' onClick={()=> curPhotos.length < 12 && refPhoto.current.click()} >
@@ -157,5 +188,4 @@ function ConsoleProductAdd() {
     </ConsoleMainArea>
   )
 }
-
 export default ConsoleProductAdd
