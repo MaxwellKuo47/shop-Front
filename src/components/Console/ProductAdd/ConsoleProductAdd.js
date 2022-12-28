@@ -1,20 +1,24 @@
 import React, { useRef, useState } from 'react'
 import { v4 as uuid } from 'uuid';
-import ConsoleMainArea from './ConsoleMainArea'
+import ConsoleMainArea from '../ConsoleMainArea'
 import { PhotoIcon, PlusIcon } from '@heroicons/react/24/outline'
 import ConsoleProductAddTagBox from './ConsoleProductAddTagBox'
 import ConsoleProductAddAmount from './ConsoleProductAddAmount';
 import ConsoleProductAddImagePreview from './ConsoleProductAddImagePreview';
+import axios from 'axios';
 
 function ConsoleProductAdd() {
-  const refPhoto = useRef(null);
+  const invalidClsList = ['outline-dashed','outline-2','outline-red-400'];
+  const refPhoto = useRef();
   const [curPhotos, setCurPhotos] = useState([]);
-  const refTagInput = useRef(null);
+  const refTagInput = useRef();
   const [Tag, setTag] = useState([]);
   const [ColorSizeElements, SetColorSizeElement] = useState([]);
   const dataSubmit = {
-    productName: useRef(null),
-    productDes: useRef(null),
+    productName: useRef(),
+    productDes: useRef(),
+    mktPrice: useRef(),
+    salPrice: useRef(),
   };
 
   const handleImageInput = async () => {
@@ -97,38 +101,82 @@ function ConsoleProductAdd() {
     SetColorSizeElement(newArr);
   }
 
-  const compressImage = (image, quality, size) => {
-      //Compress image to big one for product detail page, small one for display page.
-      return new Promise((resolve) => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        let ratio;
-        if (image.width > image.height) {
-          ratio = image.width / size;
-        } else {
-          ratio = image.height / size;
-        }
-        canvas.width = image.width / ratio;
-        canvas.height = image.height / ratio;
-        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+  const handleSubmit = async () => {
+    let invalid = false;
+    const prodNameEl = dataSubmit.productName.current;
+    if (prodNameEl.value.length < 5 ) {
+      //字數小於5個字
+      prodNameEl.classList.add(...invalidClsList);
+      invalid = true;
+    } else {
+      prodNameEl.classList.remove(...invalidClsList);
+    }
+  
+    const prodDesEl = dataSubmit.productDes.current;
+    if (prodDesEl.value.length > 1000 ) {
+      //字數大於1000個字
+      prodDesEl.classList.add(...invalidClsList);
+      invalid = true;
+    } else {
+      prodDesEl.classList.remove(...invalidClsList);
+    }
+  
+    const prodMktPrice = dataSubmit.mktPrice.current;
+    if ( isNaN(prodMktPrice.value) || prodMktPrice.value > 5000 ||  prodMktPrice.value < 200) {
+      //價格不合理
+      prodMktPrice.classList.add(...invalidClsList);
+      invalid = true;
+    } else {
+      prodMktPrice.classList.remove(...invalidClsList);
+    }
+  
+    const prodSalPrice = dataSubmit.salPrice.current;
+    if ( isNaN(prodSalPrice.value) || prodSalPrice.value > 5000 ||  prodSalPrice.value < 200) {
+      //價格不合理
+      prodSalPrice.classList.add(...invalidClsList);
+      invalid = true;
+    } else {
+      prodSalPrice.classList.remove(...invalidClsList);
+    }
 
-        canvas.toBlob(resolve,
-        "image/jpeg",
-        quality
-        )
-      })
-  }
-
-  const handleSubmit = () => {
-    console.log("商品名稱", dataSubmit.productName.current.value)
-    console.log("商品敘述", dataSubmit.productDes.current.value)
-    console.log("表單圖片", curPhotos.map((obj) => obj))
-    console.log("表單標籤", Tag)
-    console.log("表單輸出數量", ColorSizeElements)
+    if (curPhotos.length < 1) {
+      //相片少於1張
+      invalid = true
+    }
+    if (ColorSizeElements.length < 1 ) invalid = true
+    const checkAmount = ColorSizeElements.some(el => (
+      el.S == 0 &&
+      el.M == 0 &&
+      el.L == 0 &&
+      el.XL == 0 &&
+      el.OS == 0
+    ));
+    if (checkAmount) invalid = true;
+    if (invalid) return;
+    
+    //If it's valid
+    const formData = new FormData();
+    curPhotos.forEach((obj, index) => {
+      formData.append(`fileLg${index}`,obj.blobLgImg);
+      formData.append(`fileSm${index}`,obj.blobSmImg);
+    })
+    const info = {
+      fileAmount : curPhotos.length,
+      productName : prodNameEl.value,
+      productDes : prodDesEl.value,
+      productMktPrice : prodMktPrice.value,
+      productSalPrice : prodSalPrice.value,
+      productAmount : ColorSizeElements,
+      productTags : Tag,
+    }
+    const jsonInfoStr = JSON.stringify(info);
+    formData.append('info', jsonInfoStr);
+    const response = await axios.post('http://localhost:8081/api/product', formData);
+    console.log(response)
+    
   }
   return (
     <ConsoleMainArea>
-
       {/* Product Image */}
       <div className='flex items-center space-x-4 mt-2'>
         <p>商品圖片</p>
@@ -151,7 +199,13 @@ function ConsoleProductAdd() {
         <p>商品名稱</p>
         <input type="text" ref={dataSubmit.productName} className='w-full p-2 placeholder:select-none rounded-lg pl-4 bg-transparent focus:outline-none border border-slate-400'  />
       </div>
-
+      {/* Price */}
+      <div className='flex items-center space-x-4'>
+        <p>商品市價</p>
+        <input type="text" ref={dataSubmit.mktPrice} className='w-full p-2 placeholder:select-none rounded-lg pl-4 bg-transparent focus:outline-none border border-slate-400' minLength={3} maxLength={4} />
+        <p>商品售價</p>
+        <input type="text" ref={dataSubmit.salPrice} className='w-full p-2 placeholder:select-none rounded-lg pl-4 bg-transparent focus:outline-none border border-slate-400' minLength={3} maxLength={4} />
+      </div>
       {/* Stock*/}
       <div className='flex items-center space-x-4'>
         <p>商品數量</p>
@@ -188,4 +242,27 @@ function ConsoleProductAdd() {
     </ConsoleMainArea>
   )
 }
+
+const compressImage = (image, quality, size) => {
+  //Compress image to big one for product detail page, small one for display page.
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    let ratio;
+    if (image.width > image.height) {
+      ratio = image.width / size;
+    } else {
+      ratio = image.height / size;
+    }
+    canvas.width = image.width / ratio;
+    canvas.height = image.height / ratio;
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob(resolve,
+    "image/jpeg",
+    quality
+    )
+  })
+}
+
 export default ConsoleProductAdd
