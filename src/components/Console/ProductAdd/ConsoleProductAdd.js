@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { v4 as uuid } from 'uuid';
 import ConsoleMainArea from '../ConsoleMainArea'
 import { PhotoIcon, PlusIcon } from '@heroicons/react/24/outline'
@@ -6,6 +6,8 @@ import ConsoleProductAddTagBox from './ConsoleProductAddTagBox'
 import ConsoleProductAddAmount from './ConsoleProductAddAmount';
 import ConsoleProductAddImagePreview from './ConsoleProductAddImagePreview';
 import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function ConsoleProductAdd() {
   const invalidClsList = ['outline-dashed','outline-2','outline-red-400'];
@@ -43,7 +45,6 @@ function ConsoleProductAdd() {
       const blobLgImg = await compressImage(image, quality, 1200)
       const blobSmImg = await compressImage(image, quality, 600)
       const smImgSrc = URL.createObjectURL(blobSmImg)
-      console.log(blobLgImg, blobSmImg)
       newArr.push({
         ID: uuid(),
         smImgSrc,
@@ -102,52 +103,58 @@ function ConsoleProductAdd() {
     newArr[position][propName] = e.target.value;
     SetColorSizeElement(newArr);
   }
-
+  
   const handleSubmit = async () => {
     let invalid = false;
     const prodNameEl = dataSubmit.productName.current;
     if (prodNameEl.value.length < 5 ) {
-      //字數小於5個字
-      prodNameEl.classList.add(...invalidClsList);
+      toast.error("商品名稱不可小於5個字", {
+        toastId: "errProdName"
+      });
       invalid = true;
-    } else {
-      prodNameEl.classList.remove(...invalidClsList);
     }
   
     const prodDesEl = dataSubmit.productDes.current;
     if (prodDesEl.value.length > 1000 ) {
-      //字數大於1000個字
       prodDesEl.classList.add(...invalidClsList);
+      toast.error("商品描述不可以多於1000個字", {
+        toastId: "errProdDes"
+      });
       invalid = true;
-    } else {
-      prodDesEl.classList.remove(...invalidClsList);
     }
   
     const prodMktPrice = dataSubmit.mktPrice.current;
     if ( isNaN(prodMktPrice.value) || Number(prodMktPrice.value) > 9999 ||  Number(prodMktPrice.value) < 200) {
       //價格不合理
-      prodMktPrice.classList.add(...invalidClsList);
+      toast.error("商品市價不合理", {
+        toastId: "errProdMktPrice"
+      });
       invalid = true;
-    } else {
-      prodMktPrice.classList.remove(...invalidClsList);
     }
-  
+
     const prodSalPrice = dataSubmit.salPrice.current;
     if ( isNaN(prodSalPrice.value) || prodSalPrice.value > 5000 ||  prodSalPrice.value < 200) {
       //價格不合理
-      prodSalPrice.classList.add(...invalidClsList);
+      toast.error("商品售價不合理", {
+        toastId: "errProdSalPrice"
+      });
       invalid = true;
-    } else {
-      prodSalPrice.classList.remove(...invalidClsList);
     }
 
     if (curPhotos.length < 1) {
-      //相片少於1張
+      toast.error("相片不可小於1張", {
+        toastId: "errPhotos"
+      })
       invalid = true
     }
 
     const CSElementsLength = ColorSizeElements.length
-    if (CSElementsLength < 1 ) invalid = true
+    if (CSElementsLength < 1 ) {
+      toast.error("請輸入商品數量", {
+        toastId: "errColorSizeNothing"
+      })
+      invalid = true
+    }
     const colors = new Set([]);
     ColorSizeElements.forEach(el => {
       colors.add(el.color)
@@ -158,10 +165,18 @@ function ConsoleProductAdd() {
       el.OS = Number(el.OS);
       const amount = el.S + el.M + el.L + el.XL + el.OS;
       if (amount < 1 ) {
+        toast.error("商品數量小於1", {
+          toastId: "errColorSizeAmount"
+        })
         invalid = true
       }
     });
-    if (colors.size !== CSElementsLength) invalid = true; //Check color duplicate
+    if (colors.size !== CSElementsLength) {
+      toast.error("商品數量顏色重複", {
+        toastId: "errColorSizeColorDup"
+      })
+      invalid = true; //Check color duplicate
+    }
     if (invalid) return;
     
     //If it's valid
@@ -184,12 +199,20 @@ function ConsoleProductAdd() {
     const jsonInfoStr = JSON.stringify(info);
     console.log(jsonInfoStr);
     formData.append('info', jsonInfoStr);
-    const response = await axios.post('http://localhost:8081/api/product', formData);
+    const response = await toast.promise(
+      axios.post('http://localhost:8081/api/product', formData),
+      {
+        pending: '等待伺服器回應',
+        success: '新增商品成功',
+        error: '新增商品失敗'
+      }
+    )
     console.log(response)
-    
   }
+  
   return (
     <ConsoleMainArea>
+      <ToastContainer />
       {/* Product Image */}
       <div className='flex items-center space-x-4 mt-2'>
         <p>商品圖片</p>
@@ -223,8 +246,8 @@ function ConsoleProductAdd() {
       <div className='flex items-center space-x-4'>
         <p>商品數量</p>
         <div className='grid grid-cols-4 gap-2 place-items-center'>
-          {ColorSizeElements.length > 0 && ColorSizeElements.map((props, index) => (
-            <ConsoleProductAddAmount key={props.id} position={index} values={props} handleChange={handleBoxValChange} handleClose={closeColorSizeElement} />
+          {ColorSizeElements.length > 0 && ColorSizeElements.map((obj, index) => (
+            <ConsoleProductAddAmount key={obj.id} position={index} values={obj} handleChange={handleBoxValChange} handleClose={closeColorSizeElement} />
           ))}
           <button onClick={handleAddColorSizeBox} className='h-10 w-10 border-2 border-slate-400 border-dashed grid place-items-center group hover:border-blue-500 hover:bg-slate-200'>
             <PlusIcon className='group-hover:text-blue-500 h-5 text-slate-400' />
