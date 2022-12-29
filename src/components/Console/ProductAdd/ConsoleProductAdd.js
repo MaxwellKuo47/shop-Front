@@ -38,8 +38,10 @@ function ConsoleProductAdd() {
       const image = new Image();
       image.src = frdDoneEvent.target.result;
       await new Promise((resolve) => image.onload = resolve);
-      const blobLgImg = await compressImage(image, 0.9, 1200)
-      const blobSmImg = await compressImage(image, 0.9, 400)
+
+      const quality = 0.8;
+      const blobLgImg = await compressImage(image, quality, 1200)
+      const blobSmImg = await compressImage(image, quality, 600)
       const smImgSrc = URL.createObjectURL(blobSmImg)
       console.log(blobLgImg, blobSmImg)
       newArr.push({
@@ -122,7 +124,7 @@ function ConsoleProductAdd() {
     }
   
     const prodMktPrice = dataSubmit.mktPrice.current;
-    if ( isNaN(prodMktPrice.value) || prodMktPrice.value > 5000 ||  prodMktPrice.value < 200) {
+    if ( isNaN(prodMktPrice.value) || Number(prodMktPrice.value) > 9999 ||  Number(prodMktPrice.value) < 200) {
       //價格不合理
       prodMktPrice.classList.add(...invalidClsList);
       invalid = true;
@@ -143,33 +145,44 @@ function ConsoleProductAdd() {
       //相片少於1張
       invalid = true
     }
-    if (ColorSizeElements.length < 1 ) invalid = true
-    const checkAmount = ColorSizeElements.some(el => (
-      el.S == 0 &&
-      el.M == 0 &&
-      el.L == 0 &&
-      el.XL == 0 &&
-      el.OS == 0
-    ));
-    if (checkAmount) invalid = true;
+
+    const CSElementsLength = ColorSizeElements.length
+    if (CSElementsLength < 1 ) invalid = true
+    const colors = new Set([]);
+    ColorSizeElements.forEach(el => {
+      colors.add(el.color)
+      el.S = Number(el.S);
+      el.M = Number(el.M);
+      el.L = Number(el.L);
+      el.XL = Number(el.XL);
+      el.OS = Number(el.OS);
+      const amount = el.S + el.M + el.L + el.XL + el.OS;
+      if (amount < 1 ) {
+        invalid = true
+      }
+    });
+    if (colors.size !== CSElementsLength) invalid = true; //Check color duplicate
     if (invalid) return;
     
     //If it's valid
     const formData = new FormData();
+    const fileIDs = [];
     curPhotos.forEach((obj, index) => {
       formData.append(`fileLg${index}`,obj.blobLgImg);
       formData.append(`fileSm${index}`,obj.blobSmImg);
+      fileIDs.push(obj.ID)
     })
+    formData.append("fileIDs", fileIDs);
     const info = {
-      fileAmount : curPhotos.length,
       productName : prodNameEl.value,
       productDes : prodDesEl.value,
-      productMktPrice : prodMktPrice.value,
-      productSalPrice : prodSalPrice.value,
+      productMktPrice : Number(prodMktPrice.value),
+      productSalPrice : Number(prodSalPrice.value),
       productAmount : ColorSizeElements,
       productTags : Tag,
     }
     const jsonInfoStr = JSON.stringify(info);
+    console.log(jsonInfoStr);
     formData.append('info', jsonInfoStr);
     const response = await axios.post('http://localhost:8081/api/product', formData);
     console.log(response)
@@ -248,12 +261,7 @@ const compressImage = (image, quality, size) => {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    let ratio;
-    if (image.width > image.height) {
-      ratio = image.width / size;
-    } else {
-      ratio = image.height / size;
-    }
+    const ratio = Math.max(image.width, image.height) / size;
     canvas.width = image.width / ratio;
     canvas.height = image.height / ratio;
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
