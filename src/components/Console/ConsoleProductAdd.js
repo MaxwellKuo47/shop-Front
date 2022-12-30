@@ -23,6 +23,22 @@ function ConsoleProductAdd() {
   };
 
   const handleImageInput = async () => {
+    const compressImage = (image, quality, size) => {
+      //Compress image to big one for product detail page, small one for display page.
+      return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const ratio = Math.max(image.width, image.height) / size;
+        canvas.width = image.width / ratio;
+        canvas.height = image.height / ratio;
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    
+        canvas.toBlob(resolve,
+        "image/jpeg",
+        quality
+        )
+      })
+    }
     const newArr = curPhotos.slice(0)
     const curOffset = newArr.length
     if (!(curOffset < 12)) { //Max Photo for a product is 12
@@ -257,23 +273,6 @@ function ConsoleProductAdd() {
 
     </ConsoleMainArea>
   )
-}
-
-const compressImage = (image, quality, size) => {
-  //Compress image to big one for product detail page, small one for display page.
-  return new Promise((resolve) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const ratio = Math.max(image.width, image.height) / size;
-    canvas.width = image.width / ratio;
-    canvas.height = image.height / ratio;
-    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-    canvas.toBlob(resolve,
-    "image/jpeg",
-    quality
-    )
-  })
 }
 
 export default ConsoleProductAdd
