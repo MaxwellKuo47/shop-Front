@@ -8,7 +8,7 @@ import BgVideo from "./static/bg-video.mp4"
 import MainPageVideo from "./components/MainPageVideo";
 import AdminConsole from "./components/Console/AdminConsole";
 import ConsoleMainBlock from './components/Console/ConsoleMain';
-import ConsoleProductAdd from './components/Console/ProductAdd/ConsoleProductAdd';
+import ConsoleProductAdd from './components/Console/ConsoleProductAdd';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 const router = createBrowserRouter([
