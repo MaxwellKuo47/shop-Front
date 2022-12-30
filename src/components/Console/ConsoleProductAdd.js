@@ -176,7 +176,7 @@ function ConsoleProductAdd() {
       toastMessage.error("商品數量顏色重複")
       invalid = true; //Check color duplicate
     }
-    // if (invalid) return;
+    if (invalid) return;
     
     //If it's valid
     try {
@@ -268,7 +268,7 @@ function ConsoleProductAdd() {
 
       {/* Submit Button */}
       <div className='grid place-items-center pt-1'>
-        <button onClick={handleSubmit} className='transition duration-150 outline outline-emerald-400 outline-offset-2 w-28 h-11 bg-green-500 border border-green-300 active:bg-green-700  active:border-green-500 text-slate-50 font-bold text-base rounded-lg shadow-md'>新增商品</button>
+        <button onClick={handleSubmit} className='transition duration-100 outline outline-emerald-400 outline-offset-2 w-28 h-11 bg-green-500 border border-green-300 active:bg-green-700  active:border-green-500 text-slate-50 font-bold text-base rounded-lg shadow-md'>新增商品</button>
       </div>
 
     </ConsoleMainArea>
