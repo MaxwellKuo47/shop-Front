@@ -168,8 +168,11 @@ function ConsoleProductAdd() {
       el.OS = Number(el.OS);
       const amount = el.S + el.M + el.L + el.XL + el.OS;
       if (amount < 1) {
-        toastMessage.error("商品數量小於1")
-        invalid = true
+        toastMessage.error("商品數量小於1");
+        invalid = true;
+      } else if (el.OS > 0 && el.OS !== amount) {
+        toastMessage.error("使用OneSize時不得設定其他特定Size");
+        invalid = true;
       }
     });
     if (colors.size !== CSElementsLength) {
@@ -181,7 +184,6 @@ function ConsoleProductAdd() {
     //If it's valid
     try {
       const formData = new FormData();
-      const fileIDs = [];
       curPhotos.forEach((obj, index) => {
         formData.append(`fileLg${index}`, obj.blobLgImg);
         formData.append(`fileSm${index}`, obj.blobSmImg);
